@@ -1,3 +1,4 @@
+import hashlib
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import numpy as np
@@ -67,30 +68,82 @@ def get_2D_peaks(arr2D: np.array, plot: bool = False, amp_min: int = 10) \
 
     return list(zip(freqs_filter, times_filter))
 
-sound = AudioSegment.from_wav("audio.wav")
-sound = sound.set_channels(1)
-sound.export("audio2.wav", format="wav")
-sample_rate, samples = wavfile.read('audio2.wav')
-frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
-freqs = []
-times2 = []
-peaks = get_2D_peaks(spectrogram, plot=False)
-print(peaks)
-for i in range(0, len(peaks)):
-    freqs.append(peaks[i][0])
-    times2.append(peaks[i][1])
+def generate_hashes(peaks: List[Tuple[int, int]], fan_value: int = 8) -> List[Tuple[str, int]]:
+    """
+    Hash list structure:
+       sha1_hash[0:FINGERPRINT_REDUCTION]    time_offset
+        [(e05b341a9b77a51fd26, 32), ... ]
+    :param peaks: list of peak frequencies and times.
+    :param fan_value: degree to which a fingerprint can be paired with its neighbors.
+    :return: a list of hashes with their corresponding offsets.
+    """
+    # frequencies are in the first position of the tuples
+    idx_freq = 0
+    # times are in the second position of the tuples
+    idx_time = 1
+
+    # if PEAK_SORT:
+    #     peaks.sort(key=itemgetter(1))
+
+    hashes = []
+    for i in range(len(peaks)):
+        for j in range(1, fan_value):
+            if (i + j) < len(peaks):
+
+                freq1 = peaks[i][idx_freq]
+                freq2 = peaks[i + j][idx_freq]
+                t1 = peaks[i][idx_time]
+                t2 = peaks[i + j][idx_time]
+                t_delta = t2 - t1
+
+                if 0 <= t_delta <= 200:
+                    h = hashlib.sha1(f"{str(freq1)}|{str(freq2)}|{str(t_delta)}".encode('utf-8'))
+
+                    hashes.append((h.hexdigest()[0:2], t1))
+
+    return hashes
+
+def get_sound(name):
+    sound = AudioSegment.from_wav(name + ".wav")
+    sound = sound.set_channels(1)
+    sound.export(name + "_mono.wav", format="wav")
+    sample_rate, samples = wavfile.read(name + "_mono.wav")
+    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+    freqs = []
+    times2 = []
+    peaks = get_2D_peaks(spectrogram, plot=False)
+    print(peaks)
+    hash = generate_hashes(peaks, 8)
+    print("***************************")
+    print(hash)
+    for i in range(0, len(peaks)):
+        freqs.append(peaks[i][0])
+        times2.append(peaks[i][1])
+
+    # plt.pcolormesh(times, frequencies, np.log(spectrogram), shading='auto')
+    plt.plot(spectrogram)
+    plt.scatter(times2, freqs)
+    # data_1D = samples.flatten()
+    for i in range(0, 32):
+        spectrogram[1][i] = 0
+    fig, ax = plt.subplots()
+    # pxx,  freq, t, cax = ax.specgram(spectrogram[1], NFFT = 64, Fs = 64, noverlap=32)
+    # fig.colorbar(cax)
+    plt.ylabel('Frequency [Hz]')
+    plt.xlabel('Time [sec]')
+    plt.gca().invert_yaxis()
+    plt.show()
+
+    return hash
+
+def compare_hashes(hash1, hash2):
+    if (hash1 == hash2):
+        print("equal")
+    else:
+        print("different")
+    return
+
+compare_hashes(get_sound("audio"), get_sound("lines"))
 
 
-#plt.pcolormesh(times, frequencies, np.log(spectrogram), shading='auto')
-plt.plot(spectrogram)
-plt.scatter(times2, freqs)
-#data_1D = samples.flatten()
-for i in range(0, 32):
-    spectrogram[1][i] = 0
-fig, ax = plt.subplots()
-#pxx,  freq, t, cax = ax.specgram(spectrogram[1], NFFT = 64, Fs = 64, noverlap=32)
-#fig.colorbar(cax)
-plt.ylabel('Frequency [Hz]')
-plt.xlabel('Time [sec]')
-plt.gca().invert_yaxis()
-plt.show()
+
