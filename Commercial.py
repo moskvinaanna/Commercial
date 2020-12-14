@@ -108,26 +108,34 @@ def get_sound(name):
     sound = sound.set_channels(1)
     sound.export(name + "_mono.wav", format="wav")
     sample_rate, samples = wavfile.read(name + "_mono.wav")
-    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+    frequencies, times, spectrogram2 = signal.spectrogram(samples, sample_rate)
+    spectrogram = mlab.specgram(
+        samples,
+        NFFT= 4096,
+        Fs=44100,
+        window=mlab.window_hanning,
+        noverlap=int(4096*0.5))[0]
+    spectrogram = 10*np.log10(spectrogram, out=np.zeros_like(spectrogram), where=(spectrogram != 0))
     freqs = []
     times2 = []
     peaks = get_2D_peaks(spectrogram, plot=False)
     print(peaks)
-    hash = generate_hashes(peaks, 8)
+    #hash = generate_hashes(peaks, 8)
     print("***************************")
     print(hash)
     for i in range(0, len(peaks)):
         freqs.append(peaks[i][0])
         times2.append(peaks[i][1])
 
-    # plt.pcolormesh(times, frequencies, np.log(spectrogram), shading='auto')
-    plt.plot(spectrogram)
-    plt.scatter(times2, freqs)
+    #plt.pcolormesh(times, frequencies, np.log(spectrogram), shading='auto')
+    #plt.plot(spectrogram)
+
     # data_1D = samples.flatten()
-    for i in range(0, 32):
-        spectrogram[1][i] = 0
+
     fig, ax = plt.subplots()
-    # pxx,  freq, t, cax = ax.specgram(spectrogram[1], NFFT = 64, Fs = 64, noverlap=32)
+    ax.imshow(spectrogram, interpolation='nearest', aspect='auto')
+    ax.scatter(times2, freqs, color='red')
+    #pxx,  freq, t, cax = ax.specgram(spectrogram,  NFFT= 4096, Fs=44100, window=mlab.window_hanning, noverlap=int(4096 * 0.5))
     # fig.colorbar(cax)
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
@@ -143,7 +151,7 @@ def compare_hashes(hash1, hash2):
         print("different")
     return
 
-compare_hashes(get_sound("audio"), get_sound("lines"))
-
+#compare_hashes(get_sound("audio"), get_sound("lines"))
+get_sound("speech")
 
 
