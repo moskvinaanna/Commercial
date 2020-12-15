@@ -21,10 +21,10 @@ def get_2D_peaks(spec):
     background = (spec == 0)
     eroded_background = binary_erosion(background, structure=neighborhood, border_value=1)
     detected_peaks = local_max != eroded_background
-    amps = spec[detected_peaks]
+    ampls = spec[detected_peaks]
+    ampls = ampls.flatten()
     freqs, times = np.where(detected_peaks)
-    amps = amps.flatten()
-    filter_idxs = np.where(amps > 10)
+    filter_idxs = np.where(ampls > 10)
 
     freqs_filter = freqs[filter_idxs]
     times_filter = times[filter_idxs]
@@ -32,24 +32,18 @@ def get_2D_peaks(spec):
     return list(zip(freqs_filter, times_filter))
 
 def generate_hashes(peaks, fan_value):
-    idx_freq = 0
-    idx_time = 1
     hashes = []
     for i in range(len(peaks)):
         for j in range(1, fan_value):
             if (i + j) < len(peaks):
-
-                freq1 = peaks[i][idx_freq]
-                freq2 = peaks[i + j][idx_freq]
-                t1 = peaks[i][idx_time]
-                t2 = peaks[i + j][idx_time]
-                t_delta = t2 - t1
-
-                if 0 <= t_delta <= 200:
-                    h = hashlib.sha1(f"{str(freq1)}|{str(freq2)}|{str(t_delta)}".encode('utf-8'))
-
-                    hashes.append((h.hexdigest()[0:2], t1))
-
+                freq1 = peaks[i][0]
+                freq2 = peaks[i + j][0]
+                time1 = peaks[i][1]
+                time2 = peaks[i + j][1]
+                time_delta = time2 - time1
+                if 0 <= time_delta <= 200:
+                    h = hashlib.sha1(f"{str(freq1)}|{str(freq2)}|{str(time_delta)}".encode('utf-8'))
+                    hashes.append((h.hexdigest()[0:2], time1))
     return hashes
 
 def get_sound(name):
@@ -57,7 +51,6 @@ def get_sound(name):
     sound = sound.set_channels(1)
     sound.export(name + "_mono.wav", format="wav")
     sample_rate, samples = wavfile.read(name + "_mono.wav")
-    frequencies, times, spectrogram2 = signal.spectrogram(samples, sample_rate)
     spectrogram = mlab.specgram(
         samples,
         NFFT= 4096,
@@ -75,18 +68,10 @@ def get_sound(name):
     for i in range(0, len(peaks)):
         freqs.append(peaks[i][0])
         times2.append(peaks[i][1])
-
-    #plt.pcolormesh(times, frequencies, np.log(spectrogram), shading='auto')
-    #plt.plot(spectrogram)
-
-    # data_1D = samples.flatten()
-
     fig, ax = plt.subplots()
     ax.imshow(spectrogram, interpolation='nearest', aspect='auto')
     ax.scatter(times2, freqs, color='red')
-    #pxx,  freq, t, cax = ax.specgram(spectrogram,  NFFT= 4096, Fs=44100, window=mlab.window_hanning, noverlap=int(4096 * 0.5))
-    # fig.colorbar(cax)
-    plt.ylabel('Frequency [Hz]')
+    plt.ylabel('Частоты')
     plt.xlabel('Единицы времени')
     plt.gca().invert_yaxis()
     plt.show()
