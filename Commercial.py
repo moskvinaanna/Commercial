@@ -34,7 +34,7 @@ def get_2D_peaks(spec):
 
 def generate_hashes(peaks, fan_value):
     hashes = []
-    #peaks.sort(key=itemgetter(1))
+    peaks.sort(key=itemgetter(1))
     for i in range(len(peaks)):
         for j in range(1, fan_value):
             if (i + j) < len(peaks):
@@ -45,7 +45,7 @@ def generate_hashes(peaks, fan_value):
                 time_delta = time2 - time1
                 if 0 <= time_delta <= 200:
                     h = hashlib.sha1(f"{str(freq1)}|{str(freq2)}|{str(time_delta)}".encode('utf-8'))
-                    hashes.append((h.hexdigest()[0:2], time1))
+                    hashes.append((h.hexdigest()[0:2], time_delta))
     return hashes
 
 def get_sound(name):
@@ -128,7 +128,7 @@ def find_constellations(hash1, hash2):
     print(biggest_const)
 
 
-find_constellations(get_sound("male"), get_sound("mix3"))
+find_constellations(get_sound("female"), get_sound("mix3"))
 #get_sound("mix")
 
 
