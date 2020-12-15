@@ -2,6 +2,7 @@ import hashlib
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import numpy as np
+from operator import itemgetter
 from typing import List, Tuple
 from scipy import signal
 from scipy.io import wavfile
@@ -33,6 +34,7 @@ def get_2D_peaks(spec):
 
 def generate_hashes(peaks, fan_value):
     hashes = []
+    #peaks.sort(key=itemgetter(1))
     for i in range(len(peaks)):
         for j in range(1, fan_value):
             if (i + j) < len(peaks):
@@ -86,15 +88,47 @@ def compare_hashes2(hash1, hash2):
     return
 def compare_hashes(hash1, hash2):
     equal = 0
+    biggest_const = 0
+    constel = 0
     print(len(hash1))
     for i in range(0, len(hash1)):
         for j in range(0, len(hash2)):
             if hash1[i] == hash2[j]:
+                print(i)
+                print(j)
+                print("***************************")
+                if i > 1 and j > 1 and hash1[i-1] == hash2[j-1]:
+                    constel = constel + 1
+                    if constel > biggest_const:
+                        biggest_const = constel
+                if i > 1 and j > 1 and hash1[i-1] != hash2[j-1]:
+                    constel = 0
                 equal = equal + 1
     print(equal)
+    print(biggest_const)
     return
 
-compare_hashes(get_sound("male"), get_sound("mix3"))
+def find_constellations(hash1, hash2):
+    print(len(hash1))
+    biggest_const = 0
+    constel = 0
+    for i in range(0, len(hash1)):
+        for j in range(0, len(hash2)):
+            if hash1[i] == hash2[j]:
+                k = i + 1
+                p = j + 1
+                while k < len(hash1) and p < len(hash2) and hash1[k] == hash2[p]:
+                    constel = constel + 1
+                    k = k + 1
+                    p = p + 1
+                if constel > biggest_const:
+                    biggest_const = constel
+                constel = 0
+
+    print(biggest_const)
+
+
+find_constellations(get_sound("male"), get_sound("mix3"))
 #get_sound("mix")
 
 
