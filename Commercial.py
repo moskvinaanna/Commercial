@@ -45,7 +45,8 @@ def generate_hashes(peaks, fan_value):
                 time_delta = time2 - time1
                 if 0 <= time_delta <= 200:
                     h = hashlib.sha1(f"{str(freq1)}|{str(freq2)}|{str(time_delta)}".encode('utf-8'))
-                    hashes.append((h.hexdigest()[0:2], time_delta))
+                    hashes.append(h.hexdigest()[0:20])
+                    # hashes.append(h.hexdigest()[0:20], time1) - с помощью time1 можно подвинуть сдвинутый фригмент, но в примитивном виде он тлько мешает
     return hashes
 
 def get_sound(name):
