@@ -1,2 +1,6 @@
 
-=python:S125"Remove this commented out code.(÷àœ8Áóµšå.
+>python:S125‚"Remove this commented out code.(‡º©Ï8íîìæ.
+>python:S125Š"Remove this commented out code.(ı¦ÕŠ8œ‹Ûæ.
+tpython:S1542"URename function "get_2D_peaks" to match the regular expression ^[a-z_][a-z0-9_]{2,}$.(Ì¥÷³8¼‹°æ.
+>python:S125…"Remove this commented out code.(÷àœ8Áóµšå.
+opython:S117"QRename this parameter "arr2D" to match the regular expression ^[_a-z][a-z0-9_]*$.(Ì¥÷³8¼‹°æ.

@@ -14,77 +14,26 @@ from scipy.ndimage.morphology import (binary_erosion,
                                       iterate_structure)
 
 
-def get_2D_peaks(arr2D: np.array, plot: bool = False, amp_min: int = 10) \
-        -> List[Tuple[List[int], List[int]]]:
-    """
-    Extract maximum peaks from the spectogram matrix (arr2D).
-    :param arr2D: matrix representing the spectogram.
-    :param plot: for plotting the results.
-    :param amp_min: minimum amplitude in spectrogram in order to be considered a peak.
-    :return: a list composed by a list of frequencies and times.
-    """
-    # Original code from the repo is using a morphology mask that does not consider diagonal elements
-    # as neighbors (basically a diamond figure) and then applies a dilation over it, so what I'm proposing
-    # is to change from the current diamond figure to a just a normal square one:
-    #       F   T   F           T   T   T
-    #       T   T   T   ==>     T   T   T
-    #       F   T   F           T   T   T
-    # In my local tests time performance of the square mask was ~3 times faster
-    # respect to the diamond one, without hurting accuracy of the predictions.
-    # I've made now the mask shape configurable in order to allow both ways of find maximum peaks.
-    # That being said, we generate the mask by using the following function
-    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.generate_binary_structure.html
+def get_2D_peaks(spec):
     struct = generate_binary_structure(2, 2)
-
-    #  And then we apply dilation using the following function
-    #  http://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.iterate_structure.html
-    #  Take into account that if PEAK_NEIGHBORHOOD_SIZE is 2 you can avoid the use of the scipy functions and just
-    #  change it by the following code:
-    #  neighborhood = np.ones((PEAK_NEIGHBORHOOD_SIZE * 2 + 1, PEAK_NEIGHBORHOOD_SIZE * 2 + 1), dtype=bool)
     neighborhood = iterate_structure(struct, 10)
-
-    # find local maxima using our filter mask
-    local_max = maximum_filter(arr2D, footprint=neighborhood) == arr2D
-
-    # Applying erosion, the dejavu documentation does not talk about this step.
-    background = (arr2D == 0)
+    local_max = maximum_filter(spec, footprint=neighborhood) == spec
+    background = (spec == 0)
     eroded_background = binary_erosion(background, structure=neighborhood, border_value=1)
-
-    # Boolean mask of arr2D with True at peaks (applying XOR on both matrices).
     detected_peaks = local_max != eroded_background
-
-    # extract peaks
-    amps = arr2D[detected_peaks]
+    amps = spec[detected_peaks]
     freqs, times = np.where(detected_peaks)
-
-    # filter peaks
     amps = amps.flatten()
-
-    # get indices for frequency and time
-    filter_idxs = np.where(amps > amp_min)
+    filter_idxs = np.where(amps > 10)
 
     freqs_filter = freqs[filter_idxs]
     times_filter = times[filter_idxs]
 
     return list(zip(freqs_filter, times_filter))
 
-def generate_hashes(peaks: List[Tuple[int, int]], fan_value: int = 8) -> List[Tuple[str, int]]:
-    """
-    Hash list structure:
-       sha1_hash[0:FINGERPRINT_REDUCTION]    time_offset
-        [(e05b341a9b77a51fd26, 32), ... ]
-    :param peaks: list of peak frequencies and times.
-    :param fan_value: degree to which a fingerprint can be paired with its neighbors.
-    :return: a list of hashes with their corresponding offsets.
-    """
-    # frequencies are in the first position of the tuples
+def generate_hashes(peaks, fan_value):
     idx_freq = 0
-    # times are in the second position of the tuples
     idx_time = 1
-
-    # if PEAK_SORT:
-    #     peaks.sort(key=itemgetter(1))
-
     hashes = []
     for i in range(len(peaks)):
         for j in range(1, fan_value):
@@ -118,9 +67,9 @@ def get_sound(name):
     spectrogram = 10*np.log10(spectrogram, out=np.zeros_like(spectrogram), where=(spectrogram != 0))
     freqs = []
     times2 = []
-    peaks = get_2D_peaks(spectrogram, plot=False)
+    peaks = get_2D_peaks(spectrogram)
     print(peaks)
-    #hash = generate_hashes(peaks, 8)
+    hash = generate_hashes(peaks, 10)
     print("***************************")
     print(hash)
     for i in range(0, len(peaks)):
@@ -138,20 +87,29 @@ def get_sound(name):
     #pxx,  freq, t, cax = ax.specgram(spectrogram,  NFFT= 4096, Fs=44100, window=mlab.window_hanning, noverlap=int(4096 * 0.5))
     # fig.colorbar(cax)
     plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
+    plt.xlabel('Единицы времени')
     plt.gca().invert_yaxis()
     plt.show()
 
     return hash
 
-def compare_hashes(hash1, hash2):
+def compare_hashes2(hash1, hash2):
     if (hash1 == hash2):
         print("equal")
     else:
         print("different")
     return
+def compare_hashes(hash1, hash2):
+    equal = 0
+    print(len(hash1))
+    for i in range(0, len(hash1)):
+        for j in range(0, len(hash2)):
+            if hash1[i] == hash2[j]:
+                equal = equal + 1
+    print(equal)
+    return
 
-#compare_hashes(get_sound("audio"), get_sound("lines"))
-get_sound("speech")
+compare_hashes(get_sound("male"), get_sound("mix3"))
+#get_sound("mix")
 
 
