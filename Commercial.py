@@ -125,15 +125,36 @@ def find_constellations(hash1, hash2):
                 if constel > biggest_const:
                     biggest_const = constel
                 constel = 0
-
     print(biggest_const)
+    return biggest_const
 
-def put_hash_in_a_file(hash):
-    with open("output.txt", "w") as txt_file:
-        txt_file.write(hash + "\n")
+def put_hash_in_a_file(hash, filename):
+    with open(filename+ ".txt", "w") as txt_file:
+        for item in hash:
+            txt_file.write("%s, " % item)
 
+def read_hash_from_file(filename):
+    with open(filename+ ".txt", "r") as txt_file:
+        hashcode = txt_file.read().split(', ')
+    del hashcode[-1]
+    return hashcode
 
-find_constellations(get_sound("female"), get_sound("mix3"))
+def find_commercial(filename):
+    hash1 = read_hash_from_file("output_female")
+    hash2 = read_hash_from_file("output_speech")
+    hash3 = read_hash_from_file("output_audio")
+    hash_comp = get_sound(filename)
+    const1 = find_constellations(hash1, hash_comp)
+    const2 = find_constellations(hash2, hash_comp)
+    const3 = find_constellations(hash3, hash_comp)
+    if const1 >= 3 or const2 >= 3 or const3 >= 3:
+        print("Реклама есть")
+    else:
+        print("Рекламы нет")
+
+find_commercial("male")
+#put_hash_in_a_file(get_sound("speech"), "output_audio")
+#find_constellations(get_sound("female"), get_sound("mix3"))
 #get_sound("mix")
 
 
