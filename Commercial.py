@@ -128,6 +128,10 @@ def find_constellations(hash1, hash2):
 
     print(biggest_const)
 
+def put_hash_in_a_file(hash):
+    with open("output.txt", "w") as txt_file:
+        txt_file.write(hash + "\n")
+
 
 find_constellations(get_sound("female"), get_sound("mix3"))
 #get_sound("mix")
